@@ -300,4 +300,72 @@ describe('memoization', function () {
         expect(logs[4]).to.equal(getCalculateLog('' + testFunction));
         expect(logs[5]).to.equal(getFetchLog('' + resolver));
     });
+
+    it('should memoize example function result and after timeout call original function again', () => {
+        const parameters = [1, 11, 26];
+
+        function addToTime(year, month, day) {
+            return Date.now() + Date(year, month, day);
+        }
+
+        const resolver = (year, month, day) => year + month + day;
+
+        const memoized = memoization.memoize(addToTime, resolver, 1000);
+        const result = memoized(...parameters);
+
+        clock.tick( 500 );
+        expect(memoized(...parameters)).to.equal(result);
+
+        clock.tick( 500 );
+        expect(memoized(...parameters)).not.to.equal(result);
+
+        expect(logs[0]).to.equal(getCalculateLog(resolver(...parameters)));
+        expect(logs[1]).to.equal(getFetchLog(resolver(...parameters)));
+        expect(logs[2]).to.equal(getDeleteLog(resolver(...parameters)));
+        expect(logs[3]).to.equal(getCalculateLog(resolver(...parameters)));
+    });
+
+    it('should memoize factorial function result and after timeout call original function again', () => {
+        let number = 5;
+        const factorial = memoization.memoize(n => n === 0 ? 1 : (n * factorial(n - 1)), n => n, 1000);
+        const result = factorial(number);
+
+        for (const log of logs) {
+            if (number >= 0) {
+                expect(log).to.equal(getCalculateLog(number--));
+            }
+        }
+
+        logs = [];
+        number = 6;
+
+        expect(factorial(number)).to.equal(number * result);
+        expect(logs[0]).to.equal(getCalculateLog(number--));
+        expect(logs[1]).to.equal(getFetchLog(number));
+
+        logs = [];
+
+        clock.tick( 1000 );
+
+        for (let j = 0; j <= 6; j++) {
+            expect(logs[j]).to.equal(getDeleteLog(j));
+        }
+
+        logs = [];
+        expect(factorial(number)).to.equal(result);
+
+        for (const log of logs) {
+            if (number >= 0) {
+                expect(log).to.equal(getCalculateLog(number--));
+            }
+        }
+    });
+
+    it('should memoize function result with no parameters and no resolver as undefined key', () => {
+        const zero = 0;
+        const getZero = () => zero;
+        const memoized = memoization.memoize(getZero);
+        expect(memoized()).to.equal(zero);
+        expect(logs[0]).to.equal(getCalculateLog());
+    });
 });

@@ -28,8 +28,27 @@
  * @param timeout   timeout for cached values in milliseconds
  */
 function memoize(func, resolver, timeout) {
-    // TODO implement the memoize function
-    return func;
+    const cache = {};
+    return (...args) => {
+        const key = '' + (resolver ? resolver(...args) : args[0]); // Convert the cache key from the majority of types to string, except Symbols
+        // It won't work well with objects and derivated types like arrays and promises
+        let result;
+        if (Object.keys(cache).includes(key)) {
+            console.log(`Fetching key: ${key} from cache`);
+            result = cache[key];
+        } else {
+            console.log(`Calculating result with key: ${key}`);
+            result = func(...args);
+            cache[key] = result;
+            if (Number.isInteger(timeout) && timeout > 0) {
+                setTimeout(() => {
+                    console.log(`Deleting ${key} in cache`);
+                    delete cache[key];
+                }, timeout);
+            }
+        }
+        return result;
+    };
 }
 
 module.exports = {

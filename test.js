@@ -7,10 +7,10 @@ describe('memoization', function () {
     let logs;
     let originalLog;
 
-    const getCalculateLog = key => `Calculating result with key: ${key}`;
-    const getFetchLog = key => `Fetching key: ${key} from cache`;
-    const getDeleteLog = key => `Deleting ${key} in cache`;
-
+    const getCalculateLog = key => `Calculating result with key: ${typeof key === 'object' ? JSON.stringify(key) : key}`;
+    const getFetchLog = key => `Fetching key: ${typeof key === 'object' ? JSON.stringify(key) : key} from cache`;
+    const getDeleteLog = key => `Deleting ${typeof key === 'object' ? JSON.stringify(key) : key} in cache`;
+    
     beforeEach( function() {
         clock = sinon.useFakeTimers();
         originalLog = console.log;
@@ -201,7 +201,7 @@ describe('memoization', function () {
         expect(logs[3]).to.equal(getFetchLog('false'));
     });
 
-    it('should memoize function result with parameter of type array and its equivalent in array, regardless of the dimension', () => {
+    it('should memoize function result with parameter of type array', () => {
 
         let returnValue = 5;
         const parameter = [1, 2];
@@ -212,22 +212,22 @@ describe('memoization', function () {
 
         returnValue += 5;
 
-        expect(memoized('1,2')).to.equal(5);
+        expect(memoized([1, 2])).to.equal(5);
 
-        expect(memoized([1,[2]])).to.equal(5);
+        expect(memoized([1, [2]])).to.equal(10);
 
-        expect(memoized([[1],2])).to.equal(5);
+        expect(memoized([[1], 2])).to.equal(10);
 
-        expect(memoized([[1],[2]])).to.equal(5);
+        expect(memoized([[1], [2]])).to.equal(10);
 
         expect(logs[0]).to.equal(getCalculateLog(parameter));
-        expect(logs[1]).to.equal(getFetchLog('1,2'));
-        expect(logs[2]).to.equal(getFetchLog([1,[2]]));
-        expect(logs[3]).to.equal(getFetchLog([[1],2]));
-        expect(logs[4]).to.equal(getFetchLog([[1],[2]]));
+        expect(logs[1]).to.equal(getFetchLog([1, 2]));
+        expect(logs[2]).to.equal(getCalculateLog([1, [2]]));
+        expect(logs[3]).to.equal(getCalculateLog([[1], 2]));
+        expect(logs[4]).to.equal(getCalculateLog([[1], [2]]));
     });
 
-    it('should memoize same function result with same key for any object', () => {
+    it('should memoize same function result with parameter of type object', () => {
 
         let returnValue = 5;
         const parameter = {hello: 1};
@@ -238,13 +238,14 @@ describe('memoization', function () {
 
         returnValue += 5;
 
-        expect(memoized({hello: 2})).to.equal(5);
+        expect(memoized({hello:  1})).to.equal(5);
 
-        expect(memoized('[object Object]')).to.equal(5);
+        expect(memoized({hello: 2})).to.equal(10);
 
         expect(logs[0]).to.equal(getCalculateLog(parameter));
-        expect(logs[1]).to.equal(getFetchLog({hello: 2}));
-        expect(logs[2]).to.equal(getFetchLog('[object Object]'));
+        expect(logs[1]).to.equal(getFetchLog({hello: 1}));
+        expect(logs[2]).to.equal(getCalculateLog({hello: 2}));
+
     });
 
     it('should memoize function result with parameter of type date', () => {

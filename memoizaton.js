@@ -30,10 +30,10 @@
 function memoize(func, resolver, timeout) {
     const cache = {};
     return (...args) => {
-        const key = '' + (resolver ? resolver(...args) : args[0]); // Convert the cache key from the majority of types to string, except Symbols
-        // It won't work well with objects and derivated types like arrays and promises
+        let key = (resolver ? resolver(...args) : args[0]);
+        key = typeof key === 'object' ? JSON.stringify(key): ('' + key); //Convert the cache key from the majority of types to string, except Symbols
         let result;
-        if (Object.keys(cache).includes(key)) {
+        if (cache.hasOwnProperty(key)) {
             console.log(`Fetching key: ${key} from cache`);
             result = cache[key];
         } else {
